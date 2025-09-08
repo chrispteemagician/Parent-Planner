@@ -14,6 +14,8 @@ interface ContentDisplayProps {
     partyIdeas: PartyIdea[];
     holidayActivities: HolidayActivity[];
     location: string;
+    feedback: Record<string, 'like' | 'dislike'>;
+    onFeedback: (id: string, feedback: 'like' | 'dislike') => void;
 }
 
 const WelcomeMessage: React.FC<{ activeTab: ContentType; location: string }> = ({ activeTab, location }) => (
@@ -38,7 +40,7 @@ const ErrorMessage: React.FC<{ message: string }> = ({ message }) => (
     </div>
 );
 
-const ContentDisplay: React.FC<ContentDisplayProps> = ({ isLoading, error, hasGenerated, activeTab, partyIdeas, holidayActivities, location }) => {
+const ContentDisplay: React.FC<ContentDisplayProps> = ({ isLoading, error, hasGenerated, activeTab, partyIdeas, holidayActivities, location, feedback, onFeedback }) => {
     if (isLoading) {
         return <Spinner />;
     }
@@ -59,8 +61,13 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ isLoading, error, hasGe
         if(partyIdeas.length === 0) return <WelcomeMessage activeTab={activeTab} location={location} />;
         return (
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
-                {partyIdeas.map((idea, index) => (
-                    <PartyIdeaCard key={`${idea.theme}-${index}`} idea={idea} />
+                {partyIdeas.map((idea) => (
+                    <PartyIdeaCard 
+                        key={idea.id} 
+                        idea={idea} 
+                        feedback={feedback[idea.id]}
+                        onFeedback={onFeedback}
+                    />
                 ))}
             </div>
         );
@@ -70,8 +77,13 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ isLoading, error, hasGe
         if(holidayActivities.length === 0) return <WelcomeMessage activeTab={activeTab} location={location} />;
         return (
              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {holidayActivities.map((activity, index) => (
-                    <HolidayActivityCard key={`${activity.name}-${index}`} activity={activity} />
+                {holidayActivities.map((activity) => (
+                    <HolidayActivityCard 
+                        key={activity.id} 
+                        activity={activity} 
+                        feedback={feedback[activity.id]}
+                        onFeedback={onFeedback}
+                    />
                 ))}
             </div>
         );

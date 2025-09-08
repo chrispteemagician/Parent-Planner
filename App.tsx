@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AgeGroup, ContentType, PartyIdea, HolidayActivity } from './types';
 import { generatePartyIdeas, generateHolidayActivities } from './services/geminiService';
 import Header from './components/Header';
@@ -14,6 +14,31 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<Record<string, 'like' | 'dislike'>>({});
+
+  useEffect(() => {
+    try {
+      const storedFeedback = localStorage.getItem('plannerFeedback');
+      if (storedFeedback) {
+        setFeedback(JSON.parse(storedFeedback));
+      }
+    } catch (error) {
+      console.error("Failed to load feedback from localStorage", error);
+    }
+  }, []);
+
+  const handleFeedback = useCallback((id: string, rating: 'like' | 'dislike') => {
+    setFeedback(prevFeedback => {
+      const newFeedback = { ...prevFeedback, [id]: rating };
+      try {
+        localStorage.setItem('plannerFeedback', JSON.stringify(newFeedback));
+      } catch (error) {
+        console.error("Failed to save feedback to localStorage", error);
+      }
+      return newFeedback;
+    });
+  }, []);
+
 
   const handleGenerateIdeas = useCallback(async () => {
     if (activeTab === ContentType.HOLIDAY && !location.trim()) {
@@ -29,14 +54,22 @@ const App: React.FC = () => {
       if (activeTab === ContentType.PARTY) {
         const ideas = await generatePartyIdeas(ageGroup);
         if (ideas) {
-          setPartyIdeas(ideas);
+          const ideasWithIds: PartyIdea[] = (ideas as any[]).map((idea) => ({
+            ...idea,
+            id: crypto.randomUUID(),
+          }));
+          setPartyIdeas(ideasWithIds);
         } else {
           throw new Error('Could not fetch party ideas. The magic seems to be offline!');
         }
       } else {
         const activities = await generateHolidayActivities(ageGroup, location);
         if (activities) {
-          setHolidayActivities(activities);
+           const activitiesWithIds: HolidayActivity[] = (activities as any[]).map((activity) => ({
+             ...activity,
+             id: crypto.randomUUID(),
+           }));
+          setHolidayActivities(activitiesWithIds);
         } else {
           throw new Error('Could not fetch holiday activities. The adventure map is blank!');
         }
@@ -114,6 +147,8 @@ const App: React.FC = () => {
             partyIdeas={partyIdeas}
             holidayActivities={holidayActivities}
             location={location}
+            feedback={feedback}
+            onFeedback={handleFeedback}
           />
         </div>
       </main>

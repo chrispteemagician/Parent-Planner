@@ -10,6 +10,7 @@ export enum ContentType {
 }
 
 export interface PartyIdea {
+  id: string;
   theme: string;
   description: string;
   activities: string[];
@@ -18,6 +19,7 @@ export interface PartyIdea {
 }
 
 export interface HolidayActivity {
+  id: string;
   name: string;
   description: string;
   type: 'Indoor' | 'Outdoor';
